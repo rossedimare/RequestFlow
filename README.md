@@ -31,13 +31,17 @@ It is built with Laravel and React, connected through Inertia.js, and covered by
 
 ## Screenshots
 
-> Screenshots will be added here. The files below are placeholders and do not exist yet.
+### My Applications
 
-| Screen                                | Preview                                             |
-| ------------------------------------- | --------------------------------------------------- |
-| My Applications dashboard             | _Placeholder: `docs/screenshots/dashboard.png`_     |
-| Requests list with search and filters | _Placeholder: `docs/screenshots/requests-list.png`_ |
-| Create / edit request form            | _Placeholder: `docs/screenshots/request-form.png`_  |
+![My Applications dashboard](docs/screenshots/dashboard.png)
+
+### Requests
+
+![Requests list showing search, status and priority filters](docs/screenshots/requests.png)
+
+### Request Details
+
+![Request details showing the request description, status, priority and creator](docs/screenshots/request-details.png)
 
 ## Prerequisites
 
@@ -50,7 +54,7 @@ The CI pipeline runs on PHP 8.5 and Node.js 22.
 ## Installation
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/rossedimare/RequestFlow
 cd RequestFlow
 composer setup
 ```
