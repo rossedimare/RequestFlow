@@ -9,11 +9,17 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 
 class ProfileController extends Controller
 {
+    /** Email changes allowed per user per hour. */
+    private const EMAIL_CHANGES_PER_HOUR = 3;
+
     /**
      * Show the user's profile settings page.
      */
@@ -34,19 +40,47 @@ class ProfileController extends Controller
 
         $user->fill($request->validated());
 
-        // A new address has not been proven yet: clear the verification and
-        // send a fresh link to it.
-        if ($user->isDirty('email')) {
+        $emailChanged = $user->isDirty('email');
+        $limiterKey = 'profile-email-change:'.$user->id;
+
+        if ($emailChanged) {
+            // Reject before saving anything. Name-only updates never reach this
+            // limiter, and Fortify's own resend limit is separate.
+            if (RateLimiter::tooManyAttempts($limiterKey, self::EMAIL_CHANGES_PER_HOUR)) {
+                $minutes = (int) ceil(RateLimiter::availableIn($limiterKey) / 60);
+
+                throw ValidationException::withMessages([
+                    'email' => __('Too many email changes. Please try again in :minutes minutes.', ['minutes' => $minutes]),
+                ]);
+            }
+
+            // A new address has not been proven yet: clear the verification.
             $user->email_verified_at = null;
         }
 
         $user->save();
 
-        if ($user->wasChanged('email')) {
-            $user->sendEmailVerificationNotification();
+        $mailSent = true;
+
+        if ($emailChanged) {
+            RateLimiter::hit($limiterKey, 3600);
+
+            // The profile is already saved, so a mail transport failure must not
+            // turn this request into a 500. The user can resend from the profile page.
+            try {
+                $user->sendEmailVerificationNotification();
+            } catch (TransportExceptionInterface $e) {
+                report($e);
+                $mailSent = false;
+            }
         }
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+        Inertia::flash('toast', $mailSent
+            ? ['type' => 'success', 'message' => __('Profile updated.')]
+            : [
+                'type' => 'warning',
+                'message' => __('Profile updated, but the verification email could not be sent. Use the resend link below to try again.'),
+            ]);
 
         return to_route('profile.edit');
     }
