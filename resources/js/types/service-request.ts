@@ -37,6 +37,12 @@ export type ServiceRequest = {
     creator: { id: number; name: string } | null;
 };
 
+// What the current user may do with a request, computed by the server policy.
+export type ServiceRequestPermissions = {
+    update: boolean;
+    delete: boolean;
+};
+
 // Subset of the Laravel LengthAwarePaginator JSON used by the UI.
 export type Paginated<T> = {
     data: T[];

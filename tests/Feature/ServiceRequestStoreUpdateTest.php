@@ -89,12 +89,11 @@ describe('update', function () {
         expect($serviceRequest->fresh()->title)->toBe('Original');
     });
 
-    test('any authenticated user can update a request created by someone else', function () {
-        $serviceRequest = ServiceRequest::factory()->create();
-        $creatorId = $serviceRequest->user_id;
-        $editor = User::factory()->create();
+    test('the creator can update their own request', function () {
+        $creator = User::factory()->create();
+        $serviceRequest = ServiceRequest::factory()->for($creator, 'creator')->create();
 
-        $this->actingAs($editor)
+        $this->actingAs($creator)
             ->put(route('service-requests.update', $serviceRequest), validPayload())
             ->assertRedirect(route('service-requests.show', $serviceRequest));
 
@@ -103,26 +102,58 @@ describe('update', function () {
         expect($serviceRequest->title)->toBe('Replace broken monitor')
             ->and($serviceRequest->status)->toBe(RequestStatus::InProgress)
             ->and($serviceRequest->priority)->toBe(RequestPriority::High)
-            ->and($serviceRequest->user_id)->toBe($creatorId);
+            ->and($serviceRequest->user_id)->toBe($creator->id);
+    });
+
+    test('a user cannot update a request created by someone else', function () {
+        $serviceRequest = ServiceRequest::factory()->create([
+            'title' => 'Original',
+            'status' => RequestStatus::Open,
+            'priority' => RequestPriority::Low,
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->put(route('service-requests.update', $serviceRequest), validPayload())
+            ->assertForbidden();
+
+        $serviceRequest->refresh();
+
+        expect($serviceRequest->title)->toBe('Original')
+            ->and($serviceRequest->status)->toBe(RequestStatus::Open)
+            ->and($serviceRequest->priority)->toBe(RequestPriority::Low);
+    });
+
+    test('nobody can update a request whose creator was deleted', function () {
+        $serviceRequest = ServiceRequest::factory()->create([
+            'user_id' => null,
+            'title' => 'Original',
+        ]);
+
+        $this->actingAs(User::factory()->create())
+            ->put(route('service-requests.update', $serviceRequest), validPayload())
+            ->assertForbidden();
+
+        expect($serviceRequest->fresh()->title)->toBe('Original');
     });
 
     test('user_id cannot be changed through an update', function () {
-        $serviceRequest = ServiceRequest::factory()->create();
-        $creatorId = $serviceRequest->user_id;
+        $creator = User::factory()->create();
+        $serviceRequest = ServiceRequest::factory()->for($creator, 'creator')->create();
         $other = User::factory()->create();
 
-        $this->actingAs($other)->put(
+        $this->actingAs($creator)->put(
             route('service-requests.update', $serviceRequest),
             validPayload(['user_id' => $other->id]),
-        );
+        )->assertRedirect(route('service-requests.show', $serviceRequest));
 
-        expect($serviceRequest->fresh()->user_id)->toBe($creatorId);
+        expect($serviceRequest->fresh()->user_id)->toBe($creator->id);
     });
 
     test('invalid input is rejected with validation errors', function (array $overrides, string $field) {
-        $serviceRequest = ServiceRequest::factory()->create(['title' => 'Original']);
+        $creator = User::factory()->create();
+        $serviceRequest = ServiceRequest::factory()->for($creator, 'creator')->create(['title' => 'Original']);
 
-        $this->actingAs(User::factory()->create())
+        $this->actingAs($creator)
             ->put(route('service-requests.update', $serviceRequest), validPayload($overrides))
             ->assertSessionHasErrors($field);
 

@@ -5,10 +5,14 @@ import { PriorityBadge } from '@/components/service-requests/priority-badge';
 import { StatusBadge } from '@/components/service-requests/status-badge';
 import { Button } from '@/components/ui/button';
 import { edit, index } from '@/routes/service-requests';
-import type { ServiceRequest } from '@/types/service-request';
+import type {
+    ServiceRequest,
+    ServiceRequestPermissions,
+} from '@/types/service-request';
 
 type Props = {
     serviceRequest: ServiceRequest;
+    can: ServiceRequestPermissions;
 };
 
 const dateTimeFormat = new Intl.DateTimeFormat('en-US', {
@@ -16,7 +20,7 @@ const dateTimeFormat = new Intl.DateTimeFormat('en-US', {
     timeStyle: 'short',
 });
 
-export default function ServiceRequestsShow({ serviceRequest }: Props) {
+export default function ServiceRequestsShow({ serviceRequest, can }: Props) {
     return (
         <>
             <Head title={serviceRequest.title} />
@@ -35,15 +39,21 @@ export default function ServiceRequestsShow({ serviceRequest }: Props) {
                         >
                             Back to requests
                         </Link>
-                        <Button variant="outline" asChild>
-                            <Link
-                                href={edit(serviceRequest)}
-                                data-test="edit-service-request-link"
-                            >
-                                Edit
-                            </Link>
-                        </Button>
-                        <DeleteServiceRequest serviceRequest={serviceRequest} />
+                        {can.update && (
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href={edit(serviceRequest)}
+                                    data-test="edit-service-request-link"
+                                >
+                                    Edit
+                                </Link>
+                            </Button>
+                        )}
+                        {can.delete && (
+                            <DeleteServiceRequest
+                                serviceRequest={serviceRequest}
+                            />
+                        )}
                     </div>
                 </div>
 

@@ -52,6 +52,42 @@ test('an authenticated user can view any single request', function () {
             ->where('serviceRequest.creator.name', $serviceRequest->creator->name));
 });
 
+test('the show page tells the creator they can update and delete', function () {
+    $creator = User::factory()->create();
+    $serviceRequest = ServiceRequest::factory()->for($creator, 'creator')->create();
+
+    $this->actingAs($creator)
+        ->get(route('service-requests.show', $serviceRequest))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('can.update', true)
+            ->where('can.delete', true));
+});
+
+test('the show page tells other users they cannot update or delete', function () {
+    $serviceRequest = ServiceRequest::factory()->create();
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('service-requests.show', $serviceRequest))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('can.update', false)
+            ->where('can.delete', false));
+});
+
+test('a request without a creator is visible but nobody can update or delete it', function () {
+    $serviceRequest = ServiceRequest::factory()->create(['user_id' => null]);
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('service-requests.show', $serviceRequest))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('serviceRequest.id', $serviceRequest->id)
+            ->where('serviceRequest.creator', null)
+            ->where('can.update', false)
+            ->where('can.delete', false));
+});
+
 test('viewing a request that does not exist returns 404', function () {
     $this->actingAs(User::factory()->create())
         ->get(route('service-requests.show', 999))

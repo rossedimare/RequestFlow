@@ -10,7 +10,7 @@ It is built with Laravel and React, connected through Inertia.js, and covered by
 - **Status and priority workflow**: four statuses (open, in progress, resolved, closed) and four priorities (low, medium, high, urgent). New requests always start as open.
 - **Search and filtering**: search by text in the title and description, filter by status and priority, and browse results with pagination (15 per page).
 - **Server-side validation**: input is validated with Laravel Form Requests, with shared rules for creating and updating requests.
-- **Authorization**: access goes through a policy. Every authenticated user can currently view and manage every request.
+- **Authorization**: access goes through a policy. Every authenticated user can view all requests and create new ones, but only a request's creator can edit or delete it. The Edit and Delete buttons are shown only to the creator, and the server enforces the rule regardless of the UI.
 - **Creator tracking**: each request records the user who created it.
 - **Application launcher**: the dashboard ("My Applications") lists the available applications from a typed registry, which currently contains RequestFlow.
 - **Authentication**: login, registration and password reset through Laravel Fortify.

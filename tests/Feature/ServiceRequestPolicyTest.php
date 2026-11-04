@@ -4,7 +4,7 @@ use App\Models\ServiceRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Gate;
 
-test('any authenticated user can view, create, update and delete any service request', function (string $ability) {
+test('any authenticated user can view and create requests, including those of others', function (string $ability) {
     $user = User::factory()->create();
     $serviceRequest = ServiceRequest::factory()->create(); // created by someone else
 
@@ -13,7 +13,26 @@ test('any authenticated user can view, create, update and delete any service req
         : $serviceRequest;
 
     expect($user->can($ability, $arguments))->toBeTrue();
-})->with(['viewAny', 'view', 'create', 'update', 'delete']);
+})->with(['viewAny', 'view', 'create']);
+
+test('the creator can update and delete their own request', function (string $ability) {
+    $creator = User::factory()->create();
+    $serviceRequest = ServiceRequest::factory()->for($creator, 'creator')->create();
+
+    expect($creator->can($ability, $serviceRequest))->toBeTrue();
+})->with(['update', 'delete']);
+
+test('a user who is not the creator cannot update or delete a request', function (string $ability) {
+    $serviceRequest = ServiceRequest::factory()->create(); // created by someone else
+
+    expect(User::factory()->create()->can($ability, $serviceRequest))->toBeFalse();
+})->with(['update', 'delete']);
+
+test('nobody can update or delete a request whose creator was deleted', function (string $ability) {
+    $serviceRequest = ServiceRequest::factory()->create(['user_id' => null]);
+
+    expect(User::factory()->create()->can($ability, $serviceRequest))->toBeFalse();
+})->with(['update', 'delete']);
 
 test('guests are denied every ability', function (string $ability) {
     $serviceRequest = ServiceRequest::factory()->create();

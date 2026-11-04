@@ -59,6 +59,11 @@ class ServiceRequestController extends Controller
 
         return Inertia::render('service-requests/show', [
             'serviceRequest' => $serviceRequest->load('creator:id,name'),
+            // Computed by the policy so the UI never re-implements the rule.
+            'can' => [
+                'update' => Gate::allows('update', $serviceRequest),
+                'delete' => Gate::allows('delete', $serviceRequest),
+            ],
         ]);
     }
 
