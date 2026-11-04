@@ -6,6 +6,7 @@ import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { LINK_SENT_STATUS } from '@/lib/verification';
 import { edit } from '@/routes/profile';
 import { send } from '@/routes/verification';
 import type { Auth } from '@/types';
@@ -18,9 +19,6 @@ type Props = {
     mustVerifyEmail: boolean;
     status?: string;
 };
-
-// Fortify flashes this status after a verification email has been (re)sent.
-const LINK_SENT_STATUS = 'verification-link-sent';
 
 export default function Profile({ mustVerifyEmail, status }: Props) {
     const { auth } = usePage<PageProps>().props;

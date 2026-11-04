@@ -2,11 +2,9 @@ import { Form, Head, router } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
+import { LINK_SENT_STATUS } from '@/lib/verification';
 import { logout } from '@/routes';
 import { send } from '@/routes/verification';
-
-// Fortify flashes this status after a verification email has been (re)sent.
-const LINK_SENT_STATUS = 'verification-link-sent';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
