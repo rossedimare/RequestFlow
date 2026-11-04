@@ -13,7 +13,7 @@ It is built with Laravel and React, connected through Inertia.js, and covered by
 - **Authorization**: access goes through a policy. Every authenticated user can view all requests and create new ones, but only a request's creator can edit or delete it. The Edit and Delete buttons are shown only to the creator, and the server enforces the rule regardless of the UI.
 - **Creator tracking**: each request records the user who created it.
 - **Application launcher**: the dashboard ("My Applications") lists the available applications from a typed registry, which currently contains RequestFlow.
-- **Authentication**: login, registration and password reset through Laravel Fortify.
+- **Authentication**: login, registration, password reset and email verification through Laravel Fortify. The dashboard and the requests pages require a verified email address. Without verification, users can still open and update their profile (for example to correct a mistyped email), resend the verification email and delete their account. The security and appearance settings require a verified email.
 - **User settings**: profile, security (password) and appearance pages.
 - **Quality tooling**: Pest tests, static analysis with PHPStan (Larastan, level 7), code style with Pint, frontend linting and type checking, and a GitHub Actions workflow that runs them all.
 
@@ -71,9 +71,9 @@ composer dev
 
 This starts the PHP development server and the Vite dev server together. Open <http://localhost:8000> in your browser.
 
-To create the first user, go to `/register` and sign up. After signing in you land on the "My Applications" dashboard, where the RequestFlow card opens the requests list.
+To create the first user, go to `/register` and sign up. New accounts must verify their email address before they can use the application: you are sent to a verification screen with a "Resend verification email" button. Once verified, you land on the "My Applications" dashboard, where the RequestFlow card opens the requests list.
 
-> **Note:** in local development the mail driver is set to `log`, so emails such as password reset links are written to `storage/logs/laravel.log` instead of being sent.
+> **Note:** in local development the mail driver is set to `log`, so no email is ever sent. Emails such as verification and password reset links are written to `storage/logs/laravel.log`. To verify an account locally, open that file, copy the full link from the latest verification email and open it in the browser while signed in. Use the same host as `APP_URL` (`http://localhost:8000`), because the link is signed for that host, and open it within 60 minutes, before it expires. To send real emails, configure a mailer in `.env`.
 
 ## Tests and quality checks
 
