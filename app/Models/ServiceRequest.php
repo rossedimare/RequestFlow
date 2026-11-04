@@ -38,6 +38,7 @@ class ServiceRequest extends Model
     protected function casts(): array
     {
         return [
+            'user_id' => 'integer',
             'status' => RequestStatus::class,
             'priority' => RequestPriority::class,
         ];

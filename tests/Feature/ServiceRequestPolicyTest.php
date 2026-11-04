@@ -43,3 +43,17 @@ test('guests are denied every ability', function (string $ability) {
 
     expect(Gate::forUser(null)->allows($ability, $arguments))->toBeFalse();
 })->with(['viewAny', 'view', 'create', 'update', 'delete']);
+
+test('the creator check still works when the database returns user_id as a string', function (string $ability) {
+    $creator = User::factory()->create();
+    $serviceRequest = ServiceRequest::factory()->for($creator, 'creator')->create();
+
+    // Simulate drivers (MySQL, PostgreSQL) that return numeric strings.
+    $serviceRequest->setRawAttributes([
+        ...$serviceRequest->getAttributes(),
+        'user_id' => (string) $creator->id,
+    ]);
+
+    expect($creator->can($ability, $serviceRequest))->toBeTrue()
+        ->and(User::factory()->create()->can($ability, $serviceRequest))->toBeFalse();
+})->with(['update', 'delete']);

@@ -39,3 +39,13 @@ test('a service request is kept with a null creator when its user is deleted', f
     expect($request->fresh())->not->toBeNull()
         ->and($request->fresh()->user_id)->toBeNull();
 });
+
+test('user_id is cast to an integer and null stays null', function () {
+    $request = new ServiceRequest;
+
+    $request->setRawAttributes(['user_id' => '7']);
+    expect($request->user_id)->toBe(7);
+
+    $request->setRawAttributes(['user_id' => null]);
+    expect($request->user_id)->toBeNull();
+});
