@@ -15,6 +15,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Behind a TLS-terminating proxy (e.g. Render) Laravel would otherwise see plain HTTP.
+        // Which proxies are trusted comes from config/trustedproxy.php (TRUSTED_PROXIES); unset
+        // means none. Only the scheme and port are read from forwarded headers: X-Forwarded-For
+        // and X-Forwarded-Host are deliberately ignored so clients cannot spoof their IP or host.
+        $middleware->trustProxies(
+            headers: Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT,
+        );
+
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
