@@ -1,0 +1,53 @@
+# Secrets and local configuration
+.env
+.env.*
+auth.json
+
+# Version control and editor/tooling files
+.git
+.gitattributes
+.github
+.claude
+.agents
+.idea
+.vscode
+.fleet
+.nova
+.zed
+CLAUDE.md
+
+# Dependencies and build output are produced inside the image
+node_modules
+vendor
+public/build
+public/hot
+public/fonts-manifest.dev.json
+public/storage
+bootstrap/ssr
+bootstrap/cache/*.php
+
+# Local runtime state
+storage/logs/*
+storage/app/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/pail
+database/*.sqlite
+database/*.sqlite-journal
+*.log
+
+# Tests, analysis and documentation are not needed at runtime
+tests
+docs
+README.md
+phpunit.xml
+phpstan.neon
+pint.json
+.phpunit.cache
+.phpunit.result.cache
+
+# Docker's own files
+Dockerfile
+.dockerignore
