@@ -28,6 +28,68 @@ test('search matches the description case-insensitively', function () {
             ->where('serviceRequests.data.0.id', $match->id));
 });
 
+test('search matches the title regardless of letter case', function (string $title, string $search) {
+    $match = ServiceRequest::factory()->create(['title' => $title, 'description' => 'x']);
+    ServiceRequest::factory()->create(['title' => 'New keyboard', 'description' => 'y']);
+
+    $this->get(route('service-requests.index', ['search' => $search]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('serviceRequests.data', 1)
+            ->where('serviceRequests.data.0.id', $match->id));
+})->with([
+    'lowercase search, mixed-case title' => ['Broken Monitor', 'broken monitor'],
+    'uppercase search, lowercase title' => ['broken monitor', 'BROKEN MONITOR'],
+    'mixed-case search, mixed-case title' => ['BROKEN monitor', 'bRoKeN MoNiToR'],
+]);
+
+test('search matches the description regardless of letter case', function (string $description, string $search) {
+    $match = ServiceRequest::factory()->create(['title' => 'Hardware', 'description' => $description]);
+    ServiceRequest::factory()->create(['title' => 'Software', 'description' => 'Licence expired']);
+
+    $this->get(route('service-requests.index', ['search' => $search]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('serviceRequests.data', 1)
+            ->where('serviceRequests.data.0.id', $match->id));
+})->with([
+    'uppercase search, mixed-case description' => ['The Docking Station is dead', 'DOCKING STATION'],
+    'lowercase search, uppercase description' => ['THE DOCKING STATION IS DEAD', 'docking station'],
+    'mixed-case search, lowercase description' => ['the docking station is dead', 'DoCkInG sTaTiOn'],
+]);
+
+test('search still excludes requests that do not contain the term, whatever the case', function () {
+    ServiceRequest::factory()->create(['title' => 'Broken Monitor', 'description' => 'Screen flickers']);
+
+    $this->get(route('service-requests.index', ['search' => 'KEYBOARD']))
+        ->assertInertia(fn (Assert $page) => $page->has('serviceRequests.data', 0));
+});
+
+test('wildcard escaping still works with mixed-case searches', function () {
+    $match = ServiceRequest::factory()->create(['title' => 'Sale 50% Off', 'description' => 'x']);
+    ServiceRequest::factory()->create(['title' => 'Sale 500 off', 'description' => 'x']);
+    ServiceRequest::factory()->create(['title' => 'Sale 5x off', 'description' => 'x']);
+
+    $this->get(route('service-requests.index', ['search' => '50% OFF']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('serviceRequests.data', 1)
+            ->where('serviceRequests.data.0.id', $match->id));
+});
+
+test('search treats underscores and exclamation marks literally in mixed case', function () {
+    $underscore = ServiceRequest::factory()->create(['title' => 'Disk_Full alert', 'description' => 'x']);
+    $exclamation = ServiceRequest::factory()->create(['title' => 'Urgent! Server Down', 'description' => 'x']);
+    ServiceRequest::factory()->create(['title' => 'DiskXFull alert', 'description' => 'x']);
+
+    $this->get(route('service-requests.index', ['search' => 'DISK_FULL']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('serviceRequests.data', 1)
+            ->where('serviceRequests.data.0.id', $underscore->id));
+
+    $this->get(route('service-requests.index', ['search' => 'URGENT! SERVER']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('serviceRequests.data', 1)
+            ->where('serviceRequests.data.0.id', $exclamation->id));
+});
+
 test('search treats LIKE wildcards literally', function () {
     $match = ServiceRequest::factory()->create(['title' => 'Budget 100% approved', 'description' => 'x']);
     ServiceRequest::factory()->create(['title' => 'Budget 1000 approved', 'description' => 'x']);

@@ -66,9 +66,11 @@ class ServiceRequest extends Model
         // Escape LIKE wildcards (and the escape character itself) so the term is matched literally.
         $like = '%'.preg_replace('/[!%_]/', '!$0', $term).'%';
 
+        // LIKE is case-insensitive on SQLite but case-sensitive on PostgreSQL. Lowering both
+        // sides with the database's own LOWER() makes the match case-insensitive on both.
         $query->where(function (Builder $query) use ($like) {
-            $query->whereRaw("title LIKE ? ESCAPE '!'", [$like])
-                ->orWhereRaw("description LIKE ? ESCAPE '!'", [$like]);
+            $query->whereRaw("LOWER(title) LIKE LOWER(?) ESCAPE '!'", [$like])
+                ->orWhereRaw("LOWER(description) LIKE LOWER(?) ESCAPE '!'", [$like]);
         });
     }
 }
